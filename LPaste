@@ -1,0 +1,445 @@
+<xml xmlns="https://developers.google.com/blockly/xml" is_dbot="true" collection="false">
+  <variables>
+    <variable id="ema20">ema20</variable>
+    <variable id="ema50">ema50</variable>
+    <variable id="rsi14">rsi14</variable>
+    <variable id="distance">distance</variable>
+    <variable id="distance_list">distance_list</variable>
+    <variable id="avg_distance">avg_distance</variable>
+    <variable id="distance_threshold">distance_threshold</variable>
+    <variable id="previous_tick">previous_tick</variable>
+    <variable id="initial_stake">initial_stake</variable>
+  </variables>
+  <block type="trade_definition" id="trade_definition" x="0" y="0">
+    <statement name="TRADE_OPTIONS">
+      <block type="trade_definition_market" id="market_definition">
+        <field name="MARKET_LIST">synthetic_index</field>
+        <field name="SUBMARKET_LIST">continuous_indices</field>
+        <field name="SYMBOL_LIST">R_10</field>
+        <next>
+          <block type="trade_definition_tradetype" id="tradetype_definition">
+            <field name="TRADETYPECAT_LIST">callput</field>
+            <field name="TRADETYPE_LIST">risefall</field>
+            <next>
+              <block type="trade_definition_contracttype" id="contracttype_definition">
+                <field name="TYPE_LIST">both</field>
+                <next>
+                  <block type="trade_definition_candleinterval" id="candleinterval_definition">
+                    <field name="CANDLEINTERVAL_LIST">60</field>
+                    <next>
+                      <block type="trade_definition_restartbuysell" id="restartbuysell_definition">
+                        <field name="TIME_MACHINE_ENABLED">FALSE</field>
+                        <next>
+                          <block type="trade_definition_restartonerror" id="restartonerror_definition">
+                            <field name="RESTARTONERROR">TRUE</field>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="SUBMARKET">
+      <block type="trade_definition_tradeoptions" id="tradeoptions_definition">
+        <mutation has_first_item="false" has_second_item="false"></mutation>
+        <field name="DURATIONTYPE_LIST">t</field>
+        <field name="CURRENCY_LIST">USD</field>
+        <value name="DURATION">
+          <block type="math_number" id="duration_value">
+            <field name="NUM">2</field>
+          </block>
+        </value>
+        <value name="AMOUNT">
+          <block type="variables_get" id="get_initial_stake">
+            <field name="VAR" id="initial_stake">initial_stake</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+    <statement name="BEFORE_PURCHASE">
+      <block type="variables_set" id="set_initial_stake">
+        <field name="VAR" id="initial_stake">initial_stake</field>
+        <value name="VALUE">
+          <block type="math_number" id="initial_stake_value">
+            <field name="NUM">0.8</field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set" id="set_previous_tick_initial">
+            <field name="VAR" id="previous_tick">previous_tick</field>
+            <value name="VALUE">
+              <block type="math_number" id="previous_tick_initial_value">
+                <field name="NUM">0</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="set_distance_list_initial">
+                <field name="VAR" id="distance_list">distance_list</field>
+                <value name="VALUE">
+                  <block type="lists_create_with" id="create_empty_distance_list">
+                    <mutation items="0"></mutation>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="TICK_ANALYSIS">
+      <block type="variables_set" id="set_ema20">
+        <field name="VAR" id="ema20">ema20</field>
+        <value name="VALUE">
+          <block type="ema" id="calculate_ema20">
+            <value name="INPUT">
+              <block type="ticks" id="ticks_for_ema20">
+                <field name="TICKS_LIST">ohlc_values</field>
+                <field name="TICK_PROPERTY">close</field>
+              </block>
+            </value>
+            <field name="PERIOD">20</field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set" id="set_ema50">
+            <field name="VAR" id="ema50">ema50</field>
+            <value name="VALUE">
+              <block type="ema" id="calculate_ema50">
+                <value name="INPUT">
+                  <block type="ticks" id="ticks_for_ema50">
+                    <field name="TICKS_LIST">ohlc_values</field>
+                    <field name="TICK_PROPERTY">close</field>
+                  </block>
+                </value>
+                <field name="PERIOD">50</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="set_rsi14">
+                <field name="VAR" id="rsi14">rsi14</field>
+                <value name="VALUE">
+                  <block type="rsi" id="calculate_rsi14">
+                    <value name="INPUT">
+                      <block type="ticks" id="ticks_for_rsi14">
+                        <field name="TICKS_LIST">ohlc_values</field>
+                        <field name="TICK_PROPERTY">close</field>
+                      </block>
+                    </value>
+                    <field name="PERIOD">14</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="variables_set" id="set_distance">
+                    <field name="VAR" id="distance">distance</field>
+                    <value name="VALUE">
+                      <block type="math_single" id="calculate_abs_distance">
+                        <field name="OP">ABS</field>
+                        <value name="NUM">
+                          <shadow type="math_number" id="shadow_abs_distance">
+                            <field name="NUM">9</field>
+                          </shadow>
+                          <block type="math_arithmetic" id="calculate_ema_difference">
+                            <field name="OP">MINUS</field>
+                            <value name="A">
+                              <shadow type="math_number">
+                                <field name="NUM">1</field>
+                              </shadow>
+                              <block type="variables_get" id="get_ema20_for_distance">
+                                <field name="VAR" id="ema20">ema20</field>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <shadow type="math_number">
+                                <field name="NUM">1</field>
+                              </shadow>
+                              <block type="variables_get" id="get_ema50_for_distance">
+                                <field name="VAR" id="ema50">ema50</field>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="lists_setIndex" id="add_distance_to_list">
+                        <mutation at="false"></mutation>
+                        <field name="MODE">INSERT</field>
+                        <field name="WHERE">LAST</field>
+                        <value name="LIST">
+                          <block type="variables_get" id="get_distance_list_for_add">
+                            <field name="VAR" id="distance_list">distance_list</field>
+                          </block>
+                        </value>
+                        <value name="TO">
+                          <block type="variables_get" id="get_distance_for_add">
+                            <field name="VAR" id="distance">distance</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="controls_if" id="if_list_gt_200">
+                            <value name="IF0">
+                              <block type="logic_compare" id="compare_list_length">
+                                <field name="OP">GT</field>
+                                <value name="A">
+                                  <block type="lists_length" id="get_list_length">
+                                    <value name="VALUE">
+                                      <block type="variables_get" id="get_distance_list_for_length">
+                                        <field name="VAR" id="distance_list">distance_list</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </value>
+                                <value name="B">
+                                  <block type="math_number" id="number_200">
+                                    <field name="NUM">200</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </value>
+                            <statement name="DO0">
+                              <block type="lists_setIndex" id="remove_first_from_list">
+                                <mutation at="true"></mutation>
+                                <field name="MODE">REMOVE</field>
+                                <field name="WHERE">FROM_START</field>
+                                <value name="LIST">
+                                  <block type="variables_get" id="get_distance_list_for_remove">
+                                    <field name="VAR" id="distance_list">distance_list</field>
+                                  </block>
+                                </value>
+                                <value name="AT">
+                                  <block type="math_number" id="number_1">
+                                    <field name="NUM">1</field>
+                                  </block>
+                                </value>
+                              </block>
+                            </statement>
+                            <next>
+                              <block type="variables_set" id="set_avg_distance">
+                                <field name="VAR" id="avg_distance">avg_distance</field>
+                                <value name="VALUE">
+                                  <block type="math_on_list" id="calculate_avg_distance">
+                                    <mutation op="AVERAGE"></mutation>
+                                    <field name="OP">AVERAGE</field>
+                                    <value name="LIST">
+                                      <block type="variables_get" id="get_distance_list_for_avg">
+                                        <field name="VAR" id="distance_list">distance_list</field>
+                                      </block>
+                                    </value>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="variables_set" id="set_distance_threshold">
+                                    <field name="VAR" id="distance_threshold">distance_threshold</field>
+                                    <value name="VALUE">
+                                      <block type="math_arithmetic" id="calculate_threshold_value">
+                                        <field name="OP">MULTIPLY</field>
+                                        <value name="A">
+                                          <shadow type="math_number">
+                                            <field name="NUM">1</field>
+                                          </shadow>
+                                          <block type="variables_get" id="get_avg_distance_for_threshold">
+                                            <field name="VAR" id="avg_distance">avg_distance</field>
+                                          </block>
+                                        </value>
+                                        <value name="B">
+                                          <shadow type="math_number" id="number_1_25">
+                                            <field name="NUM">1.25</field>
+                                          </shadow>
+                                        </value>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="controls_if" id="if_rise_conditions">
+                                        <value name="IF0">
+                                          <block type="logic_operation" id="rise_logic_and_1">
+                                            <field name="OP">AND</field>
+                                            <value name="A">
+                                              <block type="logic_compare" id="compare_last_tick_rise">
+                                                <field name="OP">GT</field>
+                                                <value name="A">
+                                                  <block type="tick" id="last_tick_rise"></block>
+                                                </value>
+                                                <value name="B">
+                                                  <block type="variables_get" id="get_previous_tick_rise">
+                                                    <field name="VAR" id="previous_tick">previous_tick</field>
+                                                  </block>
+                                                </value>
+                                              </block>
+                                            </value>
+                                            <value name="B">
+                                              <block type="logic_operation" id="rise_logic_and_2">
+                                                <field name="OP">AND</field>
+                                                <value name="A">
+                                                  <block type="logic_compare" id="compare_ema_rise">
+                                                    <field name="OP">GT</field>
+                                                    <value name="A">
+                                                      <block type="variables_get" id="get_ema20_rise">
+                                                        <field name="VAR" id="ema20">ema20</field>
+                                                      </block>
+                                                    </value>
+                                                    <value name="B">
+                                                      <block type="variables_get" id="get_ema50_rise">
+                                                        <field name="VAR" id="ema50">ema50</field>
+                                                      </block>
+                                                    </value>
+                                                  </block>
+                                                </value>
+                                                <value name="B">
+                                                  <block type="logic_operation" id="rise_logic_and_3">
+                                                    <field name="OP">AND</field>
+                                                    <value name="A">
+                                                      <block type="logic_compare" id="compare_rsi_rise">
+                                                        <field name="OP">GT</field>
+                                                        <value name="A">
+                                                          <block type="variables_get" id="get_rsi14_rise">
+                                                            <field name="VAR" id="rsi14">rsi14</field>
+                                                          </block>
+                                                        </value>
+                                                        <value name="B">
+                                                          <block type="math_number" id="number_60_rise">
+                                                            <field name="NUM">60</field>
+                                                          </block>
+                                                        </value>
+                                                      </block>
+                                                    </value>
+                                                    <value name="B">
+                                                      <block type="logic_compare" id="compare_distance_rise">
+                                                        <field name="OP">GT</field>
+                                                        <value name="A">
+                                                          <block type="variables_get" id="get_distance_rise">
+                                                            <field name="VAR" id="distance">distance</field>
+                                                          </block>
+                                                        </value>
+                                                        <value name="B">
+                                                          <block type="variables_get" id="get_distance_threshold_rise">
+                                                            <field name="VAR" id="distance_threshold">distance_threshold</field>
+                                                          </block>
+                                                        </value>
+                                                      </block>
+                                                    </value>
+                                                  </block>
+                                                </value>
+                                              </block>
+                                            </value>
+                                          </block>
+                                        </value>
+                                        <statement name="DO0">
+                                          <block type="purchase" id="purchase_rise">
+                                            <field name="PURCHASE_LIST">CALL</field>
+                                          </block>
+                                        </statement>
+                                        <next>
+                                          <block type="controls_if" id="if_fall_conditions">
+                                            <value name="IF0">
+                                              <block type="logic_operation" id="fall_logic_and_1">
+                                                <field name="OP">AND</field>
+                                                <value name="A">
+                                                  <block type="logic_compare" id="compare_last_tick_fall">
+                                                    <field name="OP">LT</field>
+                                                    <value name="A">
+                                                      <block type="tick" id="last_tick_fall"></block>
+                                                    </value>
+                                                    <value name="B">
+                                                      <block type="variables_get" id="get_previous_tick_fall">
+                                                        <field name="VAR" id="previous_tick">previous_tick</field>
+                                                      </block>
+                                                    </value>
+                                                  </block>
+                                                </value>
+                                                <value name="B">
+                                                  <block type="logic_operation" id="fall_logic_and_2">
+                                                    <field name="OP">AND</field>
+                                                    <value name="A">
+                                                      <block type="logic_compare" id="compare_ema_fall">
+                                                        <field name="OP">LT</field>
+                                                        <value name="A">
+                                                          <block type="variables_get" id="get_ema20_fall">
+                                                            <field name="VAR" id="ema20">ema20</field>
+                                                          </block>
+                                                        </value>
+                                                        <value name="B">
+                                                          <block type="variables_get" id="get_ema50_fall">
+                                                            <field name="VAR" id="ema50">ema50</field>
+                                                          </block>
+                                                        </value>
+                                                      </block>
+                                                    </value>
+                                                    <value name="B">
+                                                      <block type="logic_operation" id="fall_logic_and_3">
+                                                        <field name="OP">AND</field>
+                                                        <value name="A">
+                                                          <block type="logic_compare" id="compare_rsi_fall">
+                                                            <field name="OP">LT</field>
+                                                            <value name="A">
+                                                              <block type="variables_get" id="get_rsi14_fall">
+                                                                <field name="VAR" id="rsi14">rsi14</field>
+                                                              </block>
+                                                            </value>
+                                                            <value name="B">
+                                                              <block type="math_number" id="number_40_fall">
+                                                                <field name="NUM">40</field>
+                                                              </block>
+                                                            </value>
+                                                          </block>
+                                                        </value>
+                                                        <value name="B">
+                                                          <block type="logic_compare" id="compare_distance_fall">
+                                                            <field name="OP">GT</field>
+                                                            <value name="A">
+                                                              <block type="variables_get" id="get_distance_fall">
+                                                                <field name="VAR" id="distance">distance</field>
+                                                              </block>
+                                                            </value>
+                                                            <value name="B">
+                                                              <block type="variables_get" id="get_distance_threshold_fall">
+                                                                <field name="VAR" id="distance_threshold">distance_threshold</field>
+                                                              </block>
+                                                            </value>
+                                                          </block>
+                                                        </value>
+                                                      </block>
+                                                    </value>
+                                                  </block>
+                                                </value>
+                                              </block>
+                                            </value>
+                                            <statement name="DO0">
+                                              <block type="purchase" id="purchase_fall">
+                                                <field name="PURCHASE_LIST">PUT</field>
+                                              </block>
+                                            </statement>
+                                            <next>
+                                              <block type="variables_set" id="update_previous_tick">
+                                                <field name="VAR" id="previous_tick">previous_tick</field>
+                                                <value name="VALUE">
+                                                  <block type="tick" id="last_tick_for_update"></block>
+                                                </value>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
